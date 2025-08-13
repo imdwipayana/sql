@@ -20,7 +20,16 @@ The `||` values concatenate the columns into strings.
 Edit the appropriate columns -- you're making two edits -- and the NULL rows will be fixed. 
 All the other rows will remain the same.) */
 
-
+WITH CTE_no_null AS (
+	SELECT
+		*,
+		COALESCE(product_size, '') as product_size_nonull,
+		COALESCE(product_qty_type, 'unit') as product_qty_type_nonull
+	FROM product
+)
+SELECT 
+	product_name || ', ' || product_size_nonull|| ' (' || product_qty_type_nonull || ')'
+FROM CTE_no_null;
 
 --Windowed Functions
 /* 1. Write a query that selects from the customer_purchases table and numbers each customer’s  
@@ -44,7 +53,7 @@ SELECT
 	DISTINCT visit_number,
 	customer_id,
 	market_date
-FROM CTE_visit_number
+FROM CTE_visit_number;
 
 /* 2. Reverse the numbering of the query from a part so each customer’s most recent visit is labeled 1, 
 then write another query that uses this one as a subquery (or temp table) and filters the results to 
@@ -69,8 +78,7 @@ SELECT
 	customer_id,
 	market_date AS recent_visit
 FROM CTE_distinct_visit
-WHERE visit_number = 1
-
+WHERE visit_number = 1;
 
 /* 3. Using a COUNT() window function, include a value along with each row of the 
 customer_purchases table that indicates how many different times that customer has purchased that product_id. */
@@ -92,7 +100,7 @@ SELECT
 	customer_id,
 	product_id,
 	product_bought_number
-FROM CTE_distinct
+FROM CTE_distinct;
 
 -- String manipulations
 /* 1. Some product names in the product table have descriptions like "Jar" or "Organic". 
@@ -106,11 +114,31 @@ Remove any trailing or leading whitespaces. Don't just use a case statement for 
 
 Hint: you might need to use INSTR(product_name,'-') to find the hyphens. INSTR will help split the column. */
 
+WITH CTE_hypen AS (
+SELECT 
+	*,
+  TRIM(SUBSTR(product_name, 1, INSTR(product_name, '- ') - 1)) AS product_name_clear
+FROM product
+)
+SELECT
+	product_name,
+	CASE
+		WHEN LENGTH(product_name_clear) > 0 THEN product_name_clear
+		ELSE product_name
+	END AS product_name_nonull,
 
+	CASE
+		WHEN LENGTH(product_name_clear) > 0 THEN TRIM(SUBSTR(product_name, INSTR(product_name, '- ') + 2), -1)
+		ELSE ''
+	END AS description
+FROM CTE_hypen;
 
 /* 2. Filter the query to show any product_size value that contain a number with REGEXP. */
 
-
+SELECT 
+	*
+FROM product 
+WHERE product_size REGEXP '\d';
 
 -- UNION
 /* 1. Using a UNION, write a query that displays the market dates with the highest and lowest total sales.
@@ -122,7 +150,39 @@ HINT: There are a possibly a few ways to do this query, but if you're struggling
 3) Query the second temp table twice, once for the best day, once for the worst day, 
 with a UNION binding them. */
 
+WITH CTE_purchase AS (
+	SELECT
+		*,
+		quantity * cost_to_customer_per_qty as purchase_each
+	FROM customer_purchases
+), CTE_daily_sales AS (
+	SELECT DISTINCT
+		market_date,
+		SUM(purchase_each) OVER(PARTITION BY market_date) as daily_sales
+	FROM CTE_purchase
+), CTE_sales_minimum AS (
+	SELECT
+		*
+	FROM CTE_daily_sales
+	ORDER BY daily_sales 
+	LIMIT 1
+), CTE_sales_maximum AS (
+	SELECT
+		*
+	FROM CTE_daily_sales
+	ORDER BY daily_sales DESC
+	LIMIT 1
+)
 
+SELECT
+	*
+FROM CTE_sales_minimum
+
+UNION
+
+SELECT
+	*
+FROM CTE_sales_maximum;
 
 
 /* SECTION 3 */
