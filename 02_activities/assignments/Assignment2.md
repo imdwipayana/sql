@@ -55,7 +55,9 @@ The store wants to keep customer addresses. Propose two architectures for the CU
 
 ```
 Your answer...
-Type 1 table will overwrite existing CUSTOMER_ADDRESS table with a new customer address (the previous address will be lost). Meanwhile the type 2 table will add a new row as a new record to preserve historical data and the current record. From that definition, table that retain changes is type 2. In the other hand table that everwrite is type 1.
+Type 1 table will overwrite existing CUSTOMER_ADDRESS table with a new customer address (the previous address will be lost).
+Meanwhile the type 2 table will add a new row as a new record to preserve historical data and the current record.
+From that definition, table that retain changes is type 2. In the other hand table that everwrite is type 1.
 ```
 
 ***
